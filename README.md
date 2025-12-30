@@ -21,8 +21,8 @@ A Python implementation of a SOCKSv5 proxy server compliant with RFC 1928.
 
 Clone the repository:
 ```bash
-git clone <repository-url>
-cd SOCKSv5_server
+git clone https://github.com/KoushikEng/socks_v5.py.git
+cd socks_v5.py
 ```
 
 ## Project Structure
