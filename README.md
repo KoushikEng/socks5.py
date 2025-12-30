@@ -25,19 +25,47 @@ git clone <repository-url>
 cd SOCKSv5_server
 ```
 
+## Project Structure
+
+```
+SOCKSv5_server/
+├── main.py              # Entry point for the server
+├── server.py            # Main Socks5Server class
+├── handlers.py          # Request parsing and connection handling
+├── relay.py             # Bidirectional data relay
+├── protocol.py          # SOCKS5 protocol constants
+├── config.py            # Configuration and constants
+└── README.md            # This file
+```
+
+### Module Descriptions
+
+- **main.py**: Application entry point, initializes logging and starts the server
+- **server.py**: Contains `Socks5Server` class that manages the server socket and accepts connections
+- **handlers.py**: Implements SOCKS5 protocol handlers (handshake, request parsing, connection establishment)
+- **relay.py**: Handles bidirectional data relay between client and remote sockets using `select()`
+- **protocol.py**: SOCKS5 protocol constants (version, commands, address types, reply codes)
+- **config.py**: Server configuration (host, port, buffer sizes, timeouts, logging)
+
 ## Usage
 
 ### Start the Server
 
 ```bash
-python socks5_server.py
+python main.py
 ```
 
 The server will start listening on `0.0.0.0:1080` by default.
 
 ### Custom Host/Port
 
-Edit the `main()` function in `socks5_server.py`:
+Edit the `DEFAULT_HOST` and `DEFAULT_PORT` in `config.py`:
+```python
+DEFAULT_HOST = '127.0.0.1'
+DEFAULT_PORT = 9999
+```
+
+Or modify the server initialization in `main.py`:
 ```python
 server = Socks5Server(host='127.0.0.1', port=9999)
 ```
@@ -137,12 +165,35 @@ The server logs to stdout with the following format:
 
 ## Architecture
 
-- **Socks5Server**: Main server class handling socket listener
-- **handle_client()**: Per-client connection handler
-- **perform_handshake()**: SOCKS5 method negotiation
-- **parse_request()**: Parse destination address from request
-- **handle_connect()**: Establish connection to destination
-- **relay_data()**: Bidirectional data relay using select()
+The server is organized into modular components with clear responsibilities:
+
+### main.py
+- `setup_logging()`: Configure logging format and level
+- `main()`: Initialize server and start accepting connections
+
+### server.py
+- `Socks5Server`: Main server class
+  - `__init__()`: Initialize server with host and port
+  - `start()`: Create socket, bind, listen, and accept connections
+  - `handle_client()`: Handle a single client connection in a thread
+
+### handlers.py
+- `perform_handshake()`: SOCKS5 handshake and method negotiation
+- `parse_request()`: Parse client request to extract command, address, and port
+- `send_reply()`: Send SOCKS5 reply messages to client
+- `handle_connect()`: Handle CONNECT command by establishing connection to destination
+
+### relay.py
+- `relay_data()`: Bidirectional data relay between client and remote sockets using non-blocking I/O
+
+### protocol.py
+- SOCKS5 protocol constants (version, commands, address types, reply codes)
+- Protocol-specific values defined per RFC 1928
+
+### config.py
+- Server configuration (host, port, buffer sizes, timeouts)
+- Logging configuration
+- Socket and threading options
 
 ## Limitations
 
