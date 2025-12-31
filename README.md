@@ -103,8 +103,8 @@ chromium --proxy-server="socks5://127.0.0.1:1080"
 import requests
 
 proxies = {
-    'http': 'socks5://127.0.0.1:1080',
-    'https': 'socks5://127.0.0.1:1080'
+   'http': 'socks5://127.0.0.1:1080',
+   'https': 'socks5://127.0.0.1:1080'
 }
 
 response = requests.get('http://example.com', proxies=proxies)

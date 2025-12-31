@@ -1,0 +1,65 @@
+name: Release Linux Binaries
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        arch: [amd64, arm64]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        if: matrix.arch == 'arm64'
+        uses: docker/setup-qemu-action@v3
+
+      - name: Extract version
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
+
+      - name: Build with Nuitka (Debian container)
+        run: |
+          docker run --rm \
+            --platform=linux/${{ matrix.arch }} \
+            -v "$PWD:/app" \
+            -w /app \
+            python:3.12-slim \
+            bash -c "
+              set -eux
+              apt-get update
+              apt-get install -y \
+                build-essential \
+                ccache \
+                patchelf
+
+              pip3 install --upgrade pip
+              pip3 install nuitka
+
+              python3 -m nuitka \
+                --follow-imports \
+                --standalone \
+                --assume-yes-for-downloads \
+                --output-dir=dist \
+                main.py
+            "
+
+      - name: Package tar.gz
+        run: |
+          mkdir -p release
+          tar -czf release/socks5-server-linux-${{ matrix.arch }}.tar.gz \
+            -C dist main.dist
+
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.VERSION }}
+          files: |
+            release/socks5-server-linux-${{ matrix.arch }}.tar.gz
